@@ -1,0 +1,107 @@
+.shop-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.shop-filters {
+  position: sticky;
+  top: calc(var(--header-height) + var(--spacing-sm));
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding-right: var(--spacing-sm);
+  border-right: 1px solid var(--color-border);
+}
+
+.filter-group__title {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  margin-bottom: var(--spacing-2xs);
+}
+
+.filter-group__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3xs);
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2xs);
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.3em 0;
+}
+
+.filter-option input {
+  accent-color: var(--color-accent);
+}
+
+.filter-option__count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+}
+
+.shop-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.shop-toolbar__count {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.active-filters {
+  display: flex;
+  gap: var(--spacing-3xs);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-sm);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-3xs);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  padding: 0.35em 0.6em;
+  border-radius: var(--radius-pill);
+}
+
+.mobile-filter-trigger {
+  display: inline-flex;
+}
+
+@media (min-width: 1024px) {
+  .mobile-filter-trigger { display: none; }
+}
+
+@media (max-width: 1024px) {
+  .shop-layout {
+    grid-template-columns: 1fr;
+  }
+  .shop-filters {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(320px, 90vw);
+    background: var(--color-surface-raised);
+    z-index: 960;
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    border-right: none;
+    box-shadow: var(--shadow-lg);
+  }
+}
