@@ -6,7 +6,7 @@ import { AgeGate } from '@/components/AgeGate';
 import { CartDrawer } from '@/components/CartDrawer';
 import { CartProvider } from '@/lib/cart/cart-context';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://purehealthpeptides.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://purehealthpeptides.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

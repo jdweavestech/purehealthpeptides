@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getProducts, getCategories } from '@/lib/api/products';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://purehealthpeptides.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://purehealthpeptides.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
