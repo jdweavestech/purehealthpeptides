@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { InfoCardLibrary } from '@/components/InfoCardLibrary';
-import { getInfoCards } from '@/lib/api/info-cards';
+import { getInfoCards } from '@/lib/info-cards';
 import { getCategories } from '@/lib/api/products';
 
 export const metadata: Metadata = {

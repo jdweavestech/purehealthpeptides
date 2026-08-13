@@ -5,7 +5,7 @@ import { ProductGallery } from '@/components/ProductGallery';
 import { ProductPurchasePanel } from '@/components/ProductPurchasePanel';
 import { ProductTabs } from '@/components/ProductTabs';
 import { ProductGrid } from '@/components/ProductGrid';
-import { getProductBySlug, getProducts, getRelatedProducts } from '@/lib/api/products';
+import { getProductBySlug, getProductSlugs, getRelatedProducts } from '@/lib/api/products';
 import { getCOA } from '@/lib/api/coa';
 
 interface Props {
@@ -13,7 +13,10 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const products = await getProducts();
+  // Lightweight id/slug-only fetch — this must NOT pull the full catalog
+  // (descriptions, images, meta_data, ...), since that's what produced the
+  // >2MB response the Next.js Data Cache refused to store during build.
+  const products = await getProductSlugs();
   return products.map((p) => ({ slug: p.slug }));
 }
 

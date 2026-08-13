@@ -23,6 +23,43 @@ async function fetchVariationsIfVariable(woo: WooProduct): Promise<WooProductVar
   return wooFetch<WooProductVariation[]>(`/products/${woo.id}/variations`, { per_page: 100 });
 }
 
+/**
+ * Requesting the whole catalog in one `per_page=100` call is what
+ * produced the >2MB response the Next.js Data Cache refused to store
+ * ("items over 2MB can not be cached"). Full WooCommerce product objects
+ * (description, images, meta_data, attributes, ...) run tens of KB each,
+ * so 100 of them at once blows past the limit. Paginating in smaller
+ * batches keeps every individual request — and therefore every
+ * individual cache entry — comfortably under 2MB while still returning
+ * the full result set to the caller.
+ */
+async function fetchAllWooPages<T>(
+  path: string,
+  params: Record<string, string | number | boolean>,
+  perPage: number
+): Promise<T[]> {
+  const results: T[] = [];
+  let page = 1;
+  // Safety cap so an unexpected API response can't loop forever.
+  for (let i = 0; i < 200; i++) {
+    const batch = await wooFetch<T[]>(path, { ...params, per_page: perPage, page });
+    results.push(...batch);
+    if (batch.length < perPage) break;
+    page += 1;
+  }
+  return results;
+}
+
+/** Page size for full-product listing requests — small enough that a page
+ *  of full product objects stays well under the 2MB Next.js data cache
+ *  limit even for a catalog with unusually large descriptions/images. */
+const LISTING_PAGE_SIZE = 20;
+
+/** Page size for the id/slug-only lookup used by generateStaticParams().
+ *  Each item is a few bytes, so the 2MB ceiling isn't a concern here —
+ *  100 is WooCommerce's own per_page maximum, minimizing request count. */
+const SLUG_PAGE_SIZE = 100;
+
 export async function getProducts(): Promise<Product[]> {
   if (!isWooConfigured()) return getMockProducts();
 
@@ -31,8 +68,33 @@ export async function getProducts(): Promise<Product[]> {
   // variable products, which is all the grid needs — see hasVariations
   // on Product for how the UI knows to defer to the product page instead
   // of guessing a variation id.
-  const wooProducts = await wooFetch<WooProduct[]>('/products', { status: 'publish', per_page: 100 });
+  const wooProducts = await fetchAllWooPages<WooProduct>('/products', { status: 'publish' }, LISTING_PAGE_SIZE);
   return wooProducts.map((wp) => mapWooProduct(wp));
+}
+
+export interface ProductStub {
+  id: string;
+  slug: string;
+}
+
+/**
+ * Cheapest possible product listing: just `id` + `slug`, nothing else.
+ * Used by generateStaticParams() (and the sitemap) where the only thing
+ * needed is "which routes exist" — not descriptions, images, or metadata.
+ * Uses WooCommerce's `_fields` param so the API itself never sends the
+ * heavy fields over the wire, and pages through the catalog so it still
+ * returns every product regardless of catalog size (WooCommerce caps
+ * per_page at 100).
+ */
+export async function getProductSlugs(): Promise<ProductStub[]> {
+  if (!isWooConfigured()) return getMockProducts().map((p) => ({ id: p.id, slug: p.slug }));
+
+  const wooProducts = await fetchAllWooPages<{ id: number; slug: string }>(
+    '/products',
+    { status: 'publish', _fields: 'id,slug' },
+    SLUG_PAGE_SIZE
+  );
+  return wooProducts.map((wp) => ({ id: String(wp.id), slug: wp.slug }));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
@@ -71,7 +133,7 @@ export interface ProductFilters {
 export async function getFilteredProducts(filters: ProductFilters): Promise<Product[]> {
   if (!isWooConfigured()) return getMockFilteredProducts(filters);
 
-  const params: Record<string, string | number> = { status: 'publish', per_page: 100 };
+  const params: Record<string, string | number> = { status: 'publish' };
 
   if (filters.categoryId) {
     params.category = filters.categoryId;
@@ -98,7 +160,7 @@ export async function getFilteredProducts(filters: ProductFilters): Promise<Prod
       params.orderby = 'menu_order';
   }
 
-  const wooProducts = await wooFetch<WooProduct[]>('/products', params);
+  const wooProducts = await fetchAllWooPages<WooProduct>('/products', params, LISTING_PAGE_SIZE);
   let products = wooProducts.map((wp) => mapWooProduct(wp));
 
   // WooCommerce attributes (format) aren't filterable via the core query params

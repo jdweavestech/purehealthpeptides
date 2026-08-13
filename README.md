@@ -64,10 +64,17 @@ can't be used as an open image-fetching proxy. If images are still
 blocked after this, the block is likely IP-based rather than header-based
 — check your host/CDN's firewall or hotlink-protection settings for the
 server's outbound IP.
-That's it — `lib/api/products.ts`, `coa.ts`, and `info-cards.ts` all check
-`isWooConfigured()` and switch to live WooCommerce/WordPress data
-automatically once the env vars are set. No component or page changes are
-needed; they only ever call the `lib/api/*` functions.
+That's it — `lib/api/products.ts` and `coa.ts` check `isWooConfigured()`
+and switch to live WooCommerce/WordPress data automatically once the env
+vars are set. No component or page changes are needed; they only ever
+call the `lib/api/*` functions.
+
+**Info Cards is the one exception, for now.** `GET /wp-json/php/v1/info-cards`
+is written into the plugin above, but until it's actually installed on the
+live site, `lib/info-cards/` always serves the local mock data regardless
+of `isWooConfigured()` — see the comment at the top of
+`lib/info-cards/index.ts` for how to switch it over once the plugin is
+deployed.
 
 **What's still simulated:** cart/checkout stays client-side (localStorage)
 per the original Phase 1 scope — see "Explicitly deferred" below. Product
@@ -116,15 +123,26 @@ lib/data/*        (Phase 1: mock data)   →   WooCommerce REST API (Phase 2)
 - `lib/data/` — centralized mock data (products, categories, COAs, info
   cards). Nothing else should hold mock data inline.
 - `lib/api/` — the data-access layer pages actually call
-  (`getProducts()`, `getProductBySlug()`, `getCategories()`, `getCOA()`,
-  `getProductInfoCard()`, etc). Each function calls the live WooCommerce
-  REST API (via `woocommerce-client.ts`) when `WOOCOMMERCE_*` env vars are
-  set, and falls back to the Phase 1 mock data otherwise — see
-  "Connecting real WooCommerce data" above. `mappers/product-mapper.ts`
+  (`getProducts()`, `getProductSlugs()`, `getProductBySlug()`,
+  `getCategories()`, `getCOA()`, etc). Each function calls the live
+  WooCommerce REST API (via `woocommerce-client.ts`) when `WOOCOMMERCE_*`
+  env vars are set, and falls back to the Phase 1 mock data otherwise —
+  see "Connecting real WooCommerce data" above. `mappers/product-mapper.ts`
   converts WooCommerce's REST shape into this project's normalized
   `Product`/`Category` types, so nothing outside `lib/api/` ever sees a raw
   WooCommerce response. `woocommerce-client.ts` is server-only and is never
-  imported by a Client Component.
+  imported by a Client Component. Product listing/detail requests are
+  paginated (WooCommerce's REST API is never asked for more than ~20 full
+  products at once — see the comment on `fetchAllWooPages` in
+  `products.ts`), and `getProductSlugs()` fetches only `id`/`slug` for
+  `generateStaticParams()` and the sitemap, so full product data (with
+  descriptions, images, meta) is never downloaded just to know which
+  routes exist.
+- `lib/info-cards/` — the data-access layer for Product Info Cards
+  (`getInfoCards()`, `getInfoCardBySlug()`), kept separate from `lib/api/`
+  because it's currently mock-only regardless of `isWooConfigured()` —
+  see the note above and the comment at the top of
+  `lib/info-cards/index.ts`.
 - `lib/pricing/bulk-pricing.ts` — the 2/5/10/15%-off ladder, isolated from
   any component so it can be swapped for WooCommerce quantity-pricing rules
   later without touching UI.
