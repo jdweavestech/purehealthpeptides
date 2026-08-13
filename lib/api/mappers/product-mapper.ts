@@ -88,6 +88,7 @@ export function mapWooProduct(woo: WooProduct, variations: WooProductVariation[]
     format: mapFormat(woo),
     images: woo.images.map((img) => ({ url: toProxiedImageUrl(img.src), alt: img.alt || woo.name })),
     variations: mappedVariations,
+    hasVariations: woo.type === 'variable',
     basePrice: Number(woo.price || mappedVariations[0]?.price || 0),
     compareAtPrice: woo.regular_price && woo.regular_price !== woo.price ? Number(woo.regular_price) : undefined,
     stockStatus: mapStockStatus(woo.stock_status),

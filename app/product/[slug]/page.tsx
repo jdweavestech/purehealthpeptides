@@ -5,7 +5,7 @@ import { ProductGallery } from '@/components/ProductGallery';
 import { ProductPurchasePanel } from '@/components/ProductPurchasePanel';
 import { ProductTabs } from '@/components/ProductTabs';
 import { ProductGrid } from '@/components/ProductGrid';
-import { getProductBySlug, getProducts } from '@/lib/api/products';
+import { getProductBySlug, getProducts, getRelatedProducts } from '@/lib/api/products';
 import { getCOA } from '@/lib/api/coa';
 
 interface Props {
@@ -36,10 +36,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const coa = product.coaId ? await getCOA(product.coaId) : undefined;
-  const allProducts = await getProducts();
-  const related = allProducts
-    .filter((p) => p.id !== product.id && p.categorySlugs.some((c) => product.categorySlugs.includes(c)))
-    .slice(0, 4);
+  const related = await getRelatedProducts(product);
 
   const jsonLd = {
     '@context': 'https://schema.org',

@@ -45,7 +45,13 @@ export function ProductCard({ product }: { product: Product }) {
         <span className="product-card__discount-note">Save up to 15% on 15+ vials</span>
 
         <div className="product-card__actions">
-          <AddToCartButton product={product} variation={product.variations[0]} compact />
+          {product.hasVariations ? (
+            <Link href={`/product/${product.slug}`} className="btn btn--primary btn--sm">
+              View Options
+            </Link>
+          ) : (
+            <AddToCartButton product={product} variation={product.variations[0]} compact />
+          )}
           <Link href={`/product/${product.slug}`} className="btn btn--secondary btn--sm">
             View
           </Link>

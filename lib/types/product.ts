@@ -26,6 +26,12 @@ export interface Product {
   format: ProductFormat;
   images: ProductImage[];
   variations: ProductVariation[];
+  /** True if this product has real selectable variations (size/format/etc).
+   *  Listing views (grid, related products) don't fetch variations for
+   *  performance, so this flag — not variations.length — is the source of
+   *  truth for whether "Add to Cart" can act on variations[0] directly or
+   *  needs to send the shopper to the product page to pick one. */
+  hasVariations: boolean;
   basePrice: number;
   compareAtPrice?: number;
   stockStatus: StockStatus;

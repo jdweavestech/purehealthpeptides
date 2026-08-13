@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import type { COA } from '@/lib/types';
-import { getCOA } from '@/lib/api/coa';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { CheckCircleIcon } from './icons';
@@ -19,13 +18,15 @@ export function COAVerificationForm() {
     if (!batchNumber.trim()) return;
     setStatus('loading');
     try {
-      const coa = await getCOA(batchNumber);
-      if (coa) {
-        setResult(coa);
-        setStatus('found');
-      } else {
+      const res = await fetch(`/api/coa?batch_number=${encodeURIComponent(batchNumber)}`);
+      if (res.status === 404) {
         setStatus('not-found');
+        return;
       }
+      if (!res.ok) throw new Error('lookup failed');
+      const coa: COA = await res.json();
+      setResult(coa);
+      setStatus('found');
     } catch {
       setStatus('error');
     }

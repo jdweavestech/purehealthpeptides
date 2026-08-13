@@ -19,17 +19,24 @@ interface Props {
 }
 
 export default async function ShopPage({ searchParams }: Props) {
+  // Categories are fetched first (not in Promise.all with products) because
+  // resolving the active category's id here lets getFilteredProducts skip
+  // its own slug→id lookup — otherwise every filtered request fired two
+  // separate calls to the same /products/categories endpoint.
+  const categories = await getCategories();
+  const activeCategory = searchParams.category
+    ? categories.find((c) => c.slug === searchParams.category)
+    : undefined;
+
   const filters: ProductFilters = {
     category: searchParams.category,
+    categoryId: activeCategory?.id,
     format: searchParams.format,
     search: searchParams.q,
     sort: (searchParams.sort as ProductFilters['sort']) ?? 'featured',
   };
 
-  const [products, categories] = await Promise.all([
-    getFilteredProducts(filters),
-    getCategories(),
-  ]);
+  const products = await getFilteredProducts(filters);
 
   return (
     <div className="container section">

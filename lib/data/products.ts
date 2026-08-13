@@ -5,7 +5,7 @@ const img = (id: string, alt: string) => ({
   alt,
 });
 
-export const products: Product[] = [
+const rawProducts: Omit<Product, 'hasVariations'>[] = [
   {
     id: 'p-bpc157',
     slug: 'bpc-157',
@@ -260,6 +260,11 @@ export const products: Product[] = [
     infoCardId: 'ic-bacwater',
   },
 ];
+
+export const products: Product[] = rawProducts.map((p) => ({
+  ...p,
+  hasVariations: p.variations.length > 1,
+}));
 
 export function getProducts(): Product[] {
   return products;
